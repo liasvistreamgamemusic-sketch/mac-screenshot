@@ -1,12 +1,18 @@
+import Combine
 import Foundation
 
 /// Bridges `SettingsStore` shortcuts to the low-level `HotkeyCenter`,
 /// re-registering whenever the bindings change so the two stay in sync.
 @MainActor
-final class HotkeyBindingManager {
+final class HotkeyBindingManager: ObservableObject {
     private let center = HotkeyCenter()
     private let settingsStore: SettingsStore
     private var lastBoundShortcuts: [CaptureMode: KeyCombo] = [:]
+
+    /// Modes whose shortcut could not be registered (e.g. taken by another app or
+    /// the system). Published so the settings UI can warn about a dead shortcut
+    /// instead of failing silently.
+    @Published private(set) var unboundModes: Set<CaptureMode> = []
 
     /// Invoked when a bound shortcut fires.
     var onTrigger: ((CaptureMode) -> Void)?
@@ -23,6 +29,7 @@ final class HotkeyBindingManager {
         lastBoundShortcuts = shortcuts
 
         center.unregisterAll()
+        var failed: Set<CaptureMode> = []
         for mode in CaptureMode.allCases {
             guard let combo = shortcuts[mode], combo.isValid else { continue }
             let didRegister = center.register(combo) { [weak self] in
@@ -30,7 +37,9 @@ final class HotkeyBindingManager {
             }
             if !didRegister {
                 AppLog.error("Could not bind \(mode.rawValue) to \(combo.displayString) (already in use?)")
+                failed.insert(mode)
             }
         }
+        unboundModes = failed
     }
 }

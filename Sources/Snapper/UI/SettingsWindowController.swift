@@ -7,9 +7,11 @@ import SwiftUI
 final class SettingsWindowController {
     private var window: NSWindow?
     private let store: SettingsStore
+    private let hotkeys: HotkeyBindingManager
 
-    init(store: SettingsStore) {
+    init(store: SettingsStore, hotkeys: HotkeyBindingManager) {
         self.store = store
+        self.hotkeys = hotkeys
     }
 
     func show() {
@@ -18,7 +20,7 @@ final class SettingsWindowController {
             return
         }
 
-        let hosting = NSHostingController(rootView: SettingsView(store: store))
+        let hosting = NSHostingController(rootView: SettingsView(store: store, hotkeys: hotkeys))
         let window = NSWindow(contentViewController: hosting)
         window.title = "\(AppInfo.name) 設定"
         window.styleMask = [.titled, .closable, .miniaturizable]

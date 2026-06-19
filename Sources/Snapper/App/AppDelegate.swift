@@ -8,7 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let settingsStore = SettingsStore()
     private lazy var captureCoordinator = CaptureCoordinator(settingsStore: settingsStore)
     private lazy var hotkeyManager = HotkeyBindingManager(settingsStore: settingsStore)
-    private lazy var settingsWindow = SettingsWindowController(store: settingsStore)
+    private lazy var settingsWindow = SettingsWindowController(store: settingsStore, hotkeys: hotkeyManager)
     private lazy var updater = AppUpdater(settingsStore: settingsStore)
     private var statusItem: StatusItemController?
     private var cancellables = Set<AnyCancellable>()

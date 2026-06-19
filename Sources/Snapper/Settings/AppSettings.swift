@@ -81,6 +81,13 @@ struct AppSettings: Codable, Equatable, Sendable {
         return pictures.appendingPathComponent(AppInfo.name, isDirectory: true)
     }
 
+    /// The mode (other than `excluding`) currently bound to `combo`, if any.
+    /// Used to reject assigning one shortcut to two modes — a duplicate makes the
+    /// second registration silently fail, leaving that mode dead.
+    func mode(using combo: KeyCombo, excluding: CaptureMode) -> CaptureMode? {
+        shortcuts.first { $0.key != excluding && $0.value == combo }?.key
+    }
+
     /// Resolves the effective save directory: the user's chosen path when set,
     /// otherwise the app's dedicated default folder.
     var resolvedSaveDirectory: URL {

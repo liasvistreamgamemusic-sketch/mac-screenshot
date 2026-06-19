@@ -5,6 +5,7 @@ import SwiftUI
 /// control binds directly back into the store, which persists automatically.
 struct SettingsView: View {
     @ObservedObject var store: SettingsStore
+    @ObservedObject var hotkeys: HotkeyBindingManager
     @State private var permissionGranted = ScreenRecordingPermission.isGranted
 
     var body: some View {
@@ -106,15 +107,24 @@ struct SettingsView: View {
                 ForEach(CaptureMode.allCases) { mode in
                     HStack {
                         Label(mode.title, systemImage: mode.symbolName)
+                        if hotkeys.unboundModes.contains(mode) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.orange)
+                                .help("このショートカットを登録できませんでした。他のアプリやシステムと重複している可能性があります。別のキーを試してください。")
+                        }
                         Spacer()
                         HotkeyRecorder(combo: shortcutBinding(for: mode))
                     }
                 }
             }
             Section {
-                Text("ショートカットはどのアプリからでも動作します。システムのスクリーンショット（⌘⇧3/4/5）と重複しない組み合わせを推奨します。")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                HStack {
+                    Text("ショートカットはどのアプリからでも動作します。システムのスクリーンショット（⌘⇧3/4/5）と重複しない組み合わせを推奨します。各操作には別々のキーを割り当ててください。")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Button("デフォルトに戻す", action: resetShortcuts)
+                }
             }
         }
         .formStyle(.grouped)
@@ -145,8 +155,32 @@ struct SettingsView: View {
     private func shortcutBinding(for mode: CaptureMode) -> Binding<KeyCombo> {
         Binding(
             get: { store.settings.shortcuts[mode] ?? AppSettings.default.shortcuts[mode]! },
-            set: { newValue in store.update { $0.shortcuts[mode] = newValue } }
+            set: { newValue in assignShortcut(newValue, to: mode) }
         )
+    }
+
+    /// Applies a recorded shortcut, but refuses to let two modes share the same
+    /// combo — a duplicate would make one of them silently fail to register.
+    private func assignShortcut(_ combo: KeyCombo, to mode: CaptureMode) {
+        if let conflicting = store.settings.mode(using: combo, excluding: mode) {
+            // Defer the alert so it runs outside the SwiftUI binding mutation.
+            DispatchQueue.main.async { presentShortcutConflict(combo, used: conflicting) }
+            return
+        }
+        store.update { $0.shortcuts[mode] = combo }
+    }
+
+    private func presentShortcutConflict(_ combo: KeyCombo, used mode: CaptureMode) {
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = "ショートカットが重複しています"
+        alert.informativeText = "\(combo.displayString) は「\(mode.title)」で使用中です。別のキーを割り当ててください。"
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
+    }
+
+    private func resetShortcuts() {
+        store.update { $0.shortcuts = AppSettings.default.shortcuts }
     }
 
     private func checkForUpdates() {
