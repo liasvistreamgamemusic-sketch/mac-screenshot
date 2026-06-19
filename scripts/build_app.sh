@@ -14,8 +14,9 @@ VERSION="${1:-0.0.0-dev}"
 BUILD="${2:-$(git rev-list --count HEAD 2>/dev/null || echo 1)}"
 APP_NAME="Snapper"
 
-# Use the full Xcode toolchain when only Command Line Tools are selected.
-if ! xcode-select -p 2>/dev/null | grep -q "Xcode.app" && [ -d "/Applications/Xcode.app" ]; then
+# Use the full Xcode toolchain when only Command Line Tools are selected. Any
+# already-selected Xcode (e.g. a versioned `Xcode_16.2.app` in CI) is respected.
+if ! xcode-select -p 2>/dev/null | grep -q "Xcode" && [ -d "/Applications/Xcode.app" ]; then
     export DEVELOPER_DIR="/Applications/Xcode.app/Contents/Developer"
 fi
 

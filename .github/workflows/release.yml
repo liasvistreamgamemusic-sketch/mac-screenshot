@@ -11,14 +11,21 @@ permissions:
 jobs:
   release:
     name: Build & Publish DMG
-    runs-on: macos-14
+    # macos-15 ships an Xcode with Swift 6 tools (the package requires 6.0).
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0 # build number derives from commit count
 
-      - name: Select latest Xcode
-        run: sudo xcode-select -switch /Applications/Xcode.app
+      - name: Select Xcode with Swift 6
+        run: |
+          # Prefer the newest installed Xcode 16+, falling back to the default.
+          XCODE="$(ls -d /Applications/Xcode_16*.app 2>/dev/null | sort -V | tail -1)"
+          [ -n "$XCODE" ] || XCODE="/Applications/Xcode.app"
+          echo "Using $XCODE"
+          sudo xcode-select -switch "$XCODE"
+          swift --version
 
       - name: Resolve version from tag
         id: version
