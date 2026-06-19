@@ -12,7 +12,14 @@ cd "$ROOT_DIR"
 
 VERSION="${1:-0.0.0-dev}"
 BUILD="${2:-$(git rev-list --count HEAD 2>/dev/null || echo 1)}"
+# The SPM product / executable name — always "Snapper".
 APP_NAME="Snapper"
+# Bundle identity. Defaults reproduce the release build byte-for-byte; override
+# for a side-by-side local build (distinct TCC/permission entry):
+#   BUNDLE_ID=dev.snapper.Snapper.dev DISPLAY_NAME="Snapper Dev" scripts/build_app.sh 0.0.0-dev
+BUNDLE_ID="${BUNDLE_ID:-dev.snapper.Snapper}"
+DISPLAY_NAME="${DISPLAY_NAME:-Snapper}"
+BUNDLE_FILENAME="${BUNDLE_FILENAME:-$DISPLAY_NAME}"
 
 # Use the full Xcode toolchain when only Command Line Tools are selected. Any
 # already-selected Xcode (e.g. a versioned `Xcode_16.2.app` in CI) is respected.
@@ -22,9 +29,9 @@ fi
 
 BUILD_DIR="$ROOT_DIR/.build/release"
 DIST_DIR="$ROOT_DIR/dist"
-APP_BUNDLE="$DIST_DIR/$APP_NAME.app"
+APP_BUNDLE="$DIST_DIR/$BUNDLE_FILENAME.app"
 
-echo "==> Building $APP_NAME $VERSION (build $BUILD)"
+echo "==> Building $DISPLAY_NAME $VERSION (build $BUILD, id $BUNDLE_ID)"
 swift build -c release --product "$APP_NAME"
 
 echo "==> Assembling bundle"
@@ -34,8 +41,9 @@ mkdir -p "$APP_BUNDLE/Contents/Resources"
 
 cp "$BUILD_DIR/$APP_NAME" "$APP_BUNDLE/Contents/MacOS/$APP_NAME"
 
-# Info.plist (substitute version/build placeholders).
+# Info.plist (substitute version/build/identity placeholders).
 sed -e "s/__VERSION__/$VERSION/g" -e "s/__BUILD__/$BUILD/g" \
+    -e "s/__BUNDLE_ID__/$BUNDLE_ID/g" -e "s/__DISPLAY_NAME__/$DISPLAY_NAME/g" \
     "$ROOT_DIR/Packaging/Info.plist.template" > "$APP_BUNDLE/Contents/Info.plist"
 
 # PkgInfo (classic, harmless, expected by some tooling).
