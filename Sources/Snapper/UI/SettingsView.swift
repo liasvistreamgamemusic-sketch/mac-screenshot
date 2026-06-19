@@ -52,7 +52,16 @@ struct SettingsView: View {
             }
 
             Section("起動") {
-                Toggle("ログイン時に自動起動", isOn: $store.settings.launchAtLogin)
+                Toggle("ログイン時に自動起動", isOn: launchAtLoginBinding)
+                if LaunchAtLogin.requiresApproval {
+                    HStack {
+                        Text("macOS の承認が必要です")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                        Spacer()
+                        Button("ログイン項目を開く") { LaunchAtLogin.openSystemSettings() }
+                    }
+                }
             }
 
             Section("アップデート") {
@@ -181,6 +190,19 @@ struct SettingsView: View {
 
     private func resetShortcuts() {
         store.update { $0.shortcuts = AppSettings.default.shortcuts }
+    }
+
+    /// Drives the login item from the real system state. Toggling applies the
+    /// change to `SMAppService` and mirrors the actual resulting state back into
+    /// settings, so the toggle can never diverge from macOS Login Items.
+    private var launchAtLoginBinding: Binding<Bool> {
+        Binding(
+            get: { LaunchAtLogin.isEnabled },
+            set: { newValue in
+                LaunchAtLogin.setEnabled(newValue)
+                store.update { $0.launchAtLogin = LaunchAtLogin.isEnabled }
+            }
+        )
     }
 
     private func checkForUpdates() {

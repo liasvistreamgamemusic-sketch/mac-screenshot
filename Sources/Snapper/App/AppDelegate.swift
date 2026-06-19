@@ -60,27 +60,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
-    /// Re-bind hotkeys and login item whenever settings change.
+    /// Re-bind hotkeys whenever settings change. The login item is driven
+    /// directly by the settings toggle (see `SettingsView`), not from here — a
+    /// coarse settings sink can't tell a user toggle from an unrelated change and
+    /// would fight the system state.
     private func observeSettings() {
         settingsStore.$settings
             .removeDuplicates()
             .sink { [weak self] _ in
                 self?.hotkeyManager.refresh()
-                self?.syncLaunchAtLogin()
             }
             .store(in: &cancellables)
     }
 
-    private func syncLaunchAtLogin() {
-        let desired = settingsStore.settings.launchAtLogin
-        if desired != LaunchAtLogin.isEnabled {
-            LaunchAtLogin.setEnabled(desired)
-        }
-    }
-
-    /// Pulls the actual system login-item state into settings so the app and
-    /// macOS Login Items stay consistent when the user toggles it on either side.
-    /// The app's toggle still pushes to the system via `syncLaunchAtLogin`.
+    /// Mirrors the real system login-item state into settings so the toggle
+    /// reflects reality — including a change made directly in macOS Login Items.
+    /// Pull-only: it never pushes the stored value back to the system.
     private func reconcileLaunchAtLogin() {
         let systemEnabled = LaunchAtLogin.isEnabled
         if settingsStore.settings.launchAtLogin != systemEnabled {

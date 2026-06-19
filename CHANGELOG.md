@@ -4,6 +4,17 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.3] - 2026-06-20
+
+### Fixed
+- Launch-at-login could not be turned off and re-enabling appeared to drop it
+  from macOS Login Items. The cause was the `.requiresApproval` state (after the
+  item is disabled in System Settings, macOS will not silently re-enable it):
+  the old code only unregistered when the status was exactly `.enabled`, so a
+  `.requiresApproval` item lingered. Turning it off now always unregisters, the
+  toggle reflects the real `SMAppService` state, and when macOS requires approval
+  the settings screen says so and offers a button to open Login Items.
+
 ## [0.1.2] - 2026-06-20
 
 ### Fixed
