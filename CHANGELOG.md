@@ -4,6 +4,25 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.1] - 2026-06-20
+
+### Fixed
+- Shortcuts: assigning the same key combination to two capture modes made one of
+  them silently stop working (Carbon rejects the duplicate registration, so the
+  "other" mode fired instead). Duplicate assignments are now rejected with a
+  message naming the conflicting mode.
+
+### Added
+- Shortcuts settings: a warning icon on any mode whose shortcut could not be
+  registered (e.g. taken by another app or the system), and a "Reset to defaults"
+  button.
+
+### Changed
+- Build: `scripts/build_app.sh` accepts `BUNDLE_ID` / `DISPLAY_NAME` /
+  `BUNDLE_FILENAME` overrides so a local build can use a separate identity
+  (e.g. `Snapper Dev`) and not collide with the installed release's Screen
+  Recording permission. Default output is unchanged.
+
 ## [0.1.0] - 2026-06-19
 
 ### Added
