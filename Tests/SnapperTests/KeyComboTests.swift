@@ -4,12 +4,17 @@ import XCTest
 @testable import Snapper
 
 final class KeyComboTests: XCTestCase {
-    func testRequiresModifier() {
-        let noModifier = KeyCombo(keyCode: UInt32(kVK_ANSI_R), modifierFlags: [])
-        XCTAssertFalse(noModifier.isValid)
+    func testValidityRequiresCommandOrControl() {
+        // No modifiers, or only Option/Shift, is rejected: such global hotkeys are
+        // unreliable and easily mis-recorded (e.g. ⌥⇧A instead of ⌃⌥S).
+        XCTAssertFalse(KeyCombo(keyCode: UInt32(kVK_ANSI_R), modifierFlags: []).isValid)
+        XCTAssertFalse(KeyCombo(keyCode: UInt32(kVK_ANSI_A), modifierFlags: [.option, .shift]).isValid)
+        XCTAssertFalse(KeyCombo(keyCode: UInt32(kVK_ANSI_R), modifierFlags: [.shift]).isValid)
 
-        let withModifier = KeyCombo(keyCode: UInt32(kVK_ANSI_R), modifierFlags: [.command])
-        XCTAssertTrue(withModifier.isValid)
+        // Command or Control (alone or combined) is accepted.
+        XCTAssertTrue(KeyCombo(keyCode: UInt32(kVK_ANSI_R), modifierFlags: [.command]).isValid)
+        XCTAssertTrue(KeyCombo(keyCode: UInt32(kVK_ANSI_S), modifierFlags: [.control, .option]).isValid)
+        XCTAssertTrue(KeyCombo(keyCode: UInt32(kVK_ANSI_R), modifierFlags: [.control, .option, .command]).isValid)
     }
 
     func testDisplayStringOrdersModifiers() {

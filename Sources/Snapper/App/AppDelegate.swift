@@ -22,12 +22,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let statusItem = StatusItemController(settingsStore: settingsStore)
         statusItem.onCapture = { [weak self] mode in self?.captureCoordinator.capture(mode) }
-        statusItem.onOpenSettings = { [weak self] in self?.settingsWindow.show() }
+        statusItem.onOpenSettings = { [weak self] in
+            // Reflect any change made directly in macOS Login Items before showing.
+            self?.reconcileLaunchAtLogin()
+            self?.settingsWindow.show()
+        }
         statusItem.onToggleClipboard = { [weak self] in
             self?.settingsStore.update { $0.copyToClipboard.toggle() }
         }
         statusItem.onQuit = { NSApp.terminate(nil) }
         self.statusItem = statusItem
+
+        // Adopt the real login-item state first so an external change (macOS
+        // Login Items) is reflected, not overwritten by the stored value below.
+        reconcileLaunchAtLogin()
 
         // Subscribing emits the current settings synchronously, which performs
         // the initial hotkey binding and login-item sync.
@@ -67,6 +75,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let desired = settingsStore.settings.launchAtLogin
         if desired != LaunchAtLogin.isEnabled {
             LaunchAtLogin.setEnabled(desired)
+        }
+    }
+
+    /// Pulls the actual system login-item state into settings so the app and
+    /// macOS Login Items stay consistent when the user toggles it on either side.
+    /// The app's toggle still pushes to the system via `syncLaunchAtLogin`.
+    private func reconcileLaunchAtLogin() {
+        let systemEnabled = LaunchAtLogin.isEnabled
+        if settingsStore.settings.launchAtLogin != systemEnabled {
+            settingsStore.update { $0.launchAtLogin = systemEnabled }
         }
     }
 }

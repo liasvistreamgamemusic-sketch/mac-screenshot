@@ -4,6 +4,21 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.2] - 2026-06-20
+
+### Fixed
+- Shortcut recorder could capture an unintended combo (e.g. ⌥⇧A instead of the
+  intended ⌃⌥S), leaving that shortcut unresponsive. The recorder now shows the
+  modifiers live as you hold them and only accepts combos that include ⌘ or ⌃
+  (Option/Shift-only combos are unreliable and easily mis-recorded).
+- Launch-at-login now stays consistent with macOS Login Items: a change made in
+  System Settings is adopted on launch / when opening Snapper's settings, instead
+  of being overwritten by the app's stored value (which made the two diverge).
+
+### Added
+- Shortcut settings show a warning on any mode whose stored shortcut is no longer
+  valid, in addition to ones that fail to register.
+
 ## [0.1.1] - 2026-06-20
 
 ### Fixed

@@ -31,7 +31,13 @@ final class HotkeyBindingManager: ObservableObject {
         center.unregisterAll()
         var failed: Set<CaptureMode> = []
         for mode in CaptureMode.allCases {
-            guard let combo = shortcuts[mode], combo.isValid else { continue }
+            guard let combo = shortcuts[mode] else { continue } // genuinely unset
+            guard combo.isValid else {
+                // Present but no longer valid (e.g. a legacy ⌥⇧-only combo).
+                AppLog.error("Invalid shortcut for \(mode.rawValue): \(combo.displayString)")
+                failed.insert(mode)
+                continue
+            }
             let didRegister = center.register(combo) { [weak self] in
                 self?.onTrigger?(mode)
             }

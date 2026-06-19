@@ -24,19 +24,28 @@ struct KeyCombo: Codable, Equatable, Sendable {
             .intersection(Self.relevantModifiers).rawValue
     }
 
-    /// At least one modifier is required for a global shortcut to be sane.
+    /// Modifiers that make a global shortcut reliable. A combo must include at
+    /// least one of these: Option/Shift-only combos clash with text entry and are
+    /// easily mis-recorded (e.g. ⌥⇧A instead of the intended ⌃⌥S).
+    static let requiredAnchors: NSEvent.ModifierFlags = [.command, .control]
+
+    /// A global shortcut is valid when it carries Command or Control.
     var isValid: Bool {
-        !modifierFlags.isEmpty
+        !modifierFlags.isDisjoint(with: Self.requiredAnchors)
     }
 
     /// Human-readable representation, e.g. `⌃⌥⌘R`.
     var displayString: String {
+        Self.glyphs(for: modifierFlags) + KeyCodeNames.string(for: keyCode)
+    }
+
+    /// The modifier glyphs (e.g. `⌃⌥⌘`) in canonical display order.
+    static func glyphs(for modifiers: NSEvent.ModifierFlags) -> String {
         var result = ""
-        if modifierFlags.contains(.control) { result += "⌃" }
-        if modifierFlags.contains(.option) { result += "⌥" }
-        if modifierFlags.contains(.shift) { result += "⇧" }
-        if modifierFlags.contains(.command) { result += "⌘" }
-        result += KeyCodeNames.string(for: keyCode)
+        if modifiers.contains(.control) { result += "⌃" }
+        if modifiers.contains(.option) { result += "⌥" }
+        if modifiers.contains(.shift) { result += "⇧" }
+        if modifiers.contains(.command) { result += "⌘" }
         return result
     }
 }
