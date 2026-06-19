@@ -8,12 +8,16 @@ All notable changes to this project are documented here. The format follows
 
 ### Added
 - Menu bar (status bar) app for Apple Silicon, no Dock icon.
-- Three capture modes via global shortcuts:
+- Four capture modes via global shortcuts:
   - Region selection (drag a rectangle, spans multiple displays).
+  - Active window (the frontmost window, captured on its own with a transparent background).
   - Active display (the display containing the frontmost window).
   - All displays composited into a single image.
 - Copy-to-clipboard on capture, enabled by default and toggleable.
 - File saving with configurable directory, PNG/JPEG format and JPEG quality.
+  Defaults to a dedicated `~/Pictures/Snapper` folder, created on first save.
+- In-app auto-update: checks GitHub Releases on launch and installs a newer
+  DMG in place (relaunching), with a guided fallback. Toggleable.
 - Shutter sound and notification feedback (toggleable).
 - Configurable global shortcuts with an in-app recorder.
 - Launch-at-login support.

@@ -23,6 +23,8 @@ struct ScreenCaptureService {
                 throw CaptureError.emptySelection
             }
             return try await captureRegion(region)
+        case .window:
+            return try await captureActiveWindow()
         }
     }
 
@@ -44,6 +46,34 @@ struct ScreenCaptureService {
     private func captureAllDisplays() async throws -> CapturedImage {
         let composite = try await compositeAllDisplays()
         return CapturedImage(cgImage: composite.image, mode: .allDisplays, logicalSize: composite.bounds.size)
+    }
+
+    private func captureActiveWindow() async throws -> CapturedImage {
+        guard let frontmost = WindowResolver.frontmostWindow() else {
+            throw CaptureError.windowNotFound
+        }
+        let content = try await shareableContent()
+        guard let window = content.windows.first(where: { $0.windowID == frontmost.id }) else {
+            throw CaptureError.windowNotFound
+        }
+
+        let filter = SCContentFilter(desktopIndependentWindow: window)
+        let config = SCStreamConfiguration()
+        // Size the output from the filter's own content rect and native scale so
+        // the capture is pixel-accurate regardless of which display the window is on.
+        let scale = CGFloat(filter.pointPixelScale)
+        config.width = Int((filter.contentRect.width * scale).rounded())
+        config.height = Int((filter.contentRect.height * scale).rounded())
+        config.captureResolution = .best
+        config.showsCursor = includeCursor
+        config.ignoreShadowsSingleWindow = true
+
+        do {
+            let image = try await SCScreenshotManager.captureImage(contentFilter: filter, configuration: config)
+            return CapturedImage(cgImage: image, mode: .window, logicalSize: filter.contentRect.size)
+        } catch {
+            throw mapCaptureError(error)
+        }
     }
 
     private func captureRegion(_ region: CGRect) async throws -> CapturedImage {

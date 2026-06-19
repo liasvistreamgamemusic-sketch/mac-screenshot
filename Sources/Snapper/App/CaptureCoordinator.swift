@@ -21,8 +21,8 @@ final class CaptureCoordinator {
         switch mode {
         case .region:
             beginRegionCapture()
-        case .activeDisplay, .allDisplays:
-            Task { await self.performCapture(mode, region: nil) }
+        case .window, .activeDisplay, .allDisplays:
+            Task { await self.performCapture(mode) }
         }
     }
 
@@ -44,7 +44,7 @@ final class CaptureCoordinator {
 
     // MARK: - Capture + output
 
-    private func performCapture(_ mode: CaptureMode, region: CGRect?) async {
+    private func performCapture(_ mode: CaptureMode, region: CGRect? = nil) async {
         isCapturing = true
         defer { isCapturing = false }
 

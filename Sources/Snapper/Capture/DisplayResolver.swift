@@ -36,24 +36,8 @@ enum DisplayResolver {
     // MARK: - Private
 
     private static func displayContainingFrontmostWindow() -> CGDirectDisplayID? {
-        guard let frontApp = NSWorkspace.shared.frontmostApplication else { return nil }
-        let pid = frontApp.processIdentifier
-
-        let options: CGWindowListOption = [.optionOnScreenOnly, .excludeDesktopElements]
-        guard let windowList = CGWindowListCopyWindowInfo(options, kCGNullWindowID) as? [[String: Any]]
-        else { return nil }
-
-        // Windows are returned front-to-back; the first window owned by the
-        // frontmost app is the one the user is interacting with.
-        for window in windowList {
-            guard let ownerPID = window[kCGWindowOwnerPID as String] as? pid_t, ownerPID == pid,
-                  let boundsDict = window[kCGWindowBounds as String] as? [String: Any],
-                  let rect = CGRect(dictionaryRepresentation: boundsDict as CFDictionary),
-                  rect.width > 1, rect.height > 1
-            else { continue }
-            return displayContaining(rect: rect)
-        }
-        return nil
+        guard let window = WindowResolver.frontmostWindow() else { return nil }
+        return displayContaining(rect: window.bounds)
     }
 
     private static func displayUnderCursor() -> CGDirectDisplayID? {

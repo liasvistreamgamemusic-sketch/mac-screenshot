@@ -37,8 +37,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "${GITHUB_REF_NAME}" \
-            "dist/Snapper-${{ steps.version.outputs.version }}.dmg" \
-            --title "Snapper ${{ steps.version.outputs.version }}" \
-            --notes "See [CHANGELOG.md](./CHANGELOG.md) for details." \
-            --verify-tag
+          DMG="dist/Snapper-${{ steps.version.outputs.version }}.dmg"
+          # Idempotent: create the release if missing, otherwise (re)upload the asset.
+          if gh release view "${GITHUB_REF_NAME}" >/dev/null 2>&1; then
+            gh release upload "${GITHUB_REF_NAME}" "$DMG" --clobber
+          else
+            gh release create "${GITHUB_REF_NAME}" "$DMG" \
+              --title "Snapper ${{ steps.version.outputs.version }}" \
+              --notes "See [CHANGELOG.md](./CHANGELOG.md) for details." \
+              --verify-tag
+          fi

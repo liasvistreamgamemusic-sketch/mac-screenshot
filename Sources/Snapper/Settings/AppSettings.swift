@@ -20,8 +20,8 @@ struct AppSettings: Codable, Equatable, Sendable {
     /// JPEG quality (0.0–1.0); ignored for PNG.
     var jpegQuality: Double
 
-    /// Directory captures are written to. Stored as a bookmarkable path string;
-    /// `nil` means "use the system default" (Desktop).
+    /// Directory captures are written to. Stored as a path string; `nil` means
+    /// "use the app's dedicated default folder" (see `defaultSaveDirectory`).
     var saveDirectoryPath: String?
 
     // MARK: Feedback
@@ -36,6 +36,15 @@ struct AppSettings: Codable, Equatable, Sendable {
 
     /// Register the app as a login item.
     var launchAtLogin: Bool
+
+    // MARK: Updates
+
+    /// Check GitHub for a newer release on launch and offer to install it.
+    var automaticUpdateChecks: Bool
+
+    /// Tag of a release the user chose to skip, so background checks stop
+    /// nagging about it. `nil` means nothing is skipped.
+    var skippedUpdateVersion: String?
 
     // MARK: Shortcuts
 
@@ -53,21 +62,32 @@ struct AppSettings: Codable, Equatable, Sendable {
         playSound: true,
         showNotification: true,
         launchAtLogin: false,
+        automaticUpdateChecks: true,
+        skippedUpdateVersion: nil,
         shortcuts: [
             // Chosen to avoid clashing with the system ⌘⇧3/4/5 screenshots.
             .region: KeyCombo(keyCode: UInt32(kVK_ANSI_R), modifierFlags: [.control, .option, .command]),
+            .window: KeyCombo(keyCode: UInt32(kVK_ANSI_W), modifierFlags: [.control, .option, .command]),
             .activeDisplay: KeyCombo(keyCode: UInt32(kVK_ANSI_D), modifierFlags: [.control, .option, .command]),
             .allDisplays: KeyCombo(keyCode: UInt32(kVK_ANSI_A), modifierFlags: [.control, .option, .command])
         ]
     )
 
-    /// Resolves the effective save directory, creating the default when needed.
+    /// The app's dedicated default capture folder: `~/Pictures/Snapper`. The
+    /// directory itself is created lazily on the first save (see `ImageFileWriter`).
+    static var defaultSaveDirectory: URL {
+        let pictures = FileManager.default.urls(for: .picturesDirectory, in: .userDomainMask).first
+            ?? FileManager.default.homeDirectoryForCurrentUser
+        return pictures.appendingPathComponent(AppInfo.name, isDirectory: true)
+    }
+
+    /// Resolves the effective save directory: the user's chosen path when set,
+    /// otherwise the app's dedicated default folder.
     var resolvedSaveDirectory: URL {
         if let path = saveDirectoryPath, !path.isEmpty {
             return URL(fileURLWithPath: path, isDirectory: true)
         }
-        return FileManager.default.urls(for: .desktopDirectory, in: .userDomainMask).first
-            ?? FileManager.default.homeDirectoryForCurrentUser
+        return Self.defaultSaveDirectory
     }
 }
 

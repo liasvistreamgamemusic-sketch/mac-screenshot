@@ -9,6 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private lazy var captureCoordinator = CaptureCoordinator(settingsStore: settingsStore)
     private lazy var hotkeyManager = HotkeyBindingManager(settingsStore: settingsStore)
     private lazy var settingsWindow = SettingsWindowController(store: settingsStore)
+    private lazy var updater = AppUpdater(settingsStore: settingsStore)
     private var statusItem: StatusItemController?
     private var cancellables = Set<AnyCancellable>()
 
@@ -35,6 +36,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // First-run nudge if the capture permission is missing.
         if !ScreenRecordingPermission.isGranted {
             ScreenRecordingPermission.request()
+        }
+
+        scheduleStartupUpdateCheck()
+    }
+
+    /// Quietly checks for a newer release shortly after launch, when enabled and
+    /// running from a packaged bundle (never during `swift run`).
+    private func scheduleStartupUpdateCheck() {
+        guard AppInfo.isRunningFromBundle, settingsStore.settings.automaticUpdateChecks else { return }
+        Task { [weak self] in
+            // Let the app settle before interrupting with any prompt.
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            await self?.updater.checkForUpdates(userInitiated: false)
         }
     }
 

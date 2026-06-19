@@ -17,6 +17,7 @@ enum CaptureError: LocalizedError {
     case noDisplaysAvailable
     case permissionDenied
     case emptySelection
+    case windowNotFound
     case compositingFailed
     case encodingFailed
 
@@ -28,6 +29,8 @@ enum CaptureError: LocalizedError {
             return "画面収録の権限がありません。システム設定 > プライバシーとセキュリティ > 画面収録 で Snapper を許可してください。"
         case .emptySelection:
             return "選択領域が空です。"
+        case .windowNotFound:
+            return "選択したウィンドウが見つかりませんでした。"
         case .compositingFailed:
             return "画像の合成に失敗しました。"
         case .encodingFailed:

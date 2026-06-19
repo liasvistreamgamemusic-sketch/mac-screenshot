@@ -54,6 +54,16 @@ struct SettingsView: View {
                 Toggle("ログイン時に自動起動", isOn: $store.settings.launchAtLogin)
             }
 
+            Section("アップデート") {
+                Toggle("起動時に自動でアップデートを確認", isOn: $store.settings.automaticUpdateChecks)
+                HStack {
+                    Text("バージョン \(AppInfo.version)")
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Button("今すぐ確認", action: checkForUpdates)
+                }
+            }
+
             Section("権限") {
                 permissionRow
             }
@@ -65,7 +75,7 @@ struct SettingsView: View {
         HStack {
             Text("保存先")
             Spacer()
-            Text(store.settings.resolvedSaveDirectory.lastPathComponent)
+            Text((store.settings.resolvedSaveDirectory.path as NSString).abbreviatingWithTildeInPath)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
                 .truncationMode(.middle)
@@ -137,6 +147,12 @@ struct SettingsView: View {
             get: { store.settings.shortcuts[mode] ?? AppSettings.default.shortcuts[mode]! },
             set: { newValue in store.update { $0.shortcuts[mode] = newValue } }
         )
+    }
+
+    private func checkForUpdates() {
+        Task { @MainActor in
+            await AppUpdater(settingsStore: store).checkForUpdates(userInitiated: true)
+        }
     }
 
     private func chooseSaveDirectory() {

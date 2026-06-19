@@ -5,6 +5,9 @@ import Foundation
 enum CaptureMode: String, CaseIterable, Codable, Identifiable, Sendable {
     /// Interactive rectangular region selection across displays.
     case region
+    /// The active (frontmost) window, captured on its own — transparent
+    /// background, no surrounding desktop.
+    case window
     /// The full display that currently contains the frontmost window
     /// (falls back to the display under the cursor, then the main display).
     case activeDisplay
@@ -17,6 +20,7 @@ enum CaptureMode: String, CaseIterable, Codable, Identifiable, Sendable {
     var title: String {
         switch self {
         case .region: return "選択領域をキャプチャ"
+        case .window: return "アクティブなウィンドウをキャプチャ"
         case .activeDisplay: return "アクティブな画面をキャプチャ"
         case .allDisplays: return "全画面をまとめてキャプチャ"
         }
@@ -26,6 +30,7 @@ enum CaptureMode: String, CaseIterable, Codable, Identifiable, Sendable {
     var symbolName: String {
         switch self {
         case .region: return "selection.pin.in.out"
+        case .window: return "macwindow.on.rectangle"
         case .activeDisplay: return "macwindow"
         case .allDisplays: return "rectangle.3.group"
         }
@@ -35,6 +40,7 @@ enum CaptureMode: String, CaseIterable, Codable, Identifiable, Sendable {
     var fileNameToken: String {
         switch self {
         case .region: return "Region"
+        case .window: return "Window"
         case .activeDisplay: return "Display"
         case .allDisplays: return "AllDisplays"
         }
