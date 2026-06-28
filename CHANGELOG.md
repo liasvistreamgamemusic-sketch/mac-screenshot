@@ -4,6 +4,16 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.4] - 2026-06-29
+
+### Fixed
+- Region selection ignored the built-in display when an external monitor was
+  connected: only the external screen dimmed and accepted a selection, while the
+  main display stayed bright and unselectable. The overlay used a single
+  borderless window spanning the union of all screen frames, which macOS does not
+  reliably render or route mouse events for across multiple displays. The overlay
+  now uses one window per `NSScreen`, so every display dims and can be selected.
+
 ## [0.1.3] - 2026-06-20
 
 ### Fixed

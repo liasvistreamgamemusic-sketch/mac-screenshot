@@ -14,6 +14,10 @@ final class RegionSelectionView: NSView {
     override var acceptsFirstResponder: Bool { true }
     override var isFlipped: Bool { false }
 
+    /// Accept the initial click even when this screen's overlay window is not
+    /// key, so a drag can start on any display.
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
     override func resetCursorRects() {
         addCursorRect(bounds, cursor: .crosshair)
     }
